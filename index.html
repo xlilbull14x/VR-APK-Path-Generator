@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VR APK Extraction Helper</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --text-color: #f8fafc;
+      --accent-color: #38bdf8;
+      --accent-hover: #0284c7;
+      --code-bg: #090d16;
+      --border-color: #334155;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .container {
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      padding: 30px;
+      width: 100%;
+      max-width: 650px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--border-color);
+    }
+
+    h1 {
+      margin-top: 0;
+      color: var(--accent-color);
+      font-size: 1.8rem;
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .step {
+      margin-bottom: 25px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background-color: var(--code-bg);
+      color: var(--text-color);
+      font-size: 1rem;
+      box-sizing: border-box;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--accent-color);
+    }
+
+    .command-box {
+      margin-top: 10px;
+      background-color: var(--code-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    code {
+      font-family: "Courier New", Courier, monospace;
+      color: #a5f3fc;
+      word-break: break-all;
+      font-size: 0.95rem;
+    }
+
+    button {
+      background-color: var(--accent-color);
+      color: #0f172a;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color 0.2s;
+    }
+
+    button:hover {
+      background-color: var(--accent-hover);
+    }
+
+    hr {
+      border: 0;
+      height: 1px;
+      background: var(--border-color);
+      margin: 25px 0;
+    }
+
+    .instruction {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>VR APK Path Generator</h1>
+
+    <!-- Step 1 -->
+    <div class="step">
+      <label for="packageName">Step 1: Enter Package Name</label>
+      <input type="text" id="packageName" placeholder="e.g., com.WaveX.MonkeySorcery" oninput="generateCommands()">
+      <div class="instruction">Run this command in your terminal/cmd to find the installed package location:</div>
+      <div class="command-box">
+        <code id="cmdStep1">adb shell pm path </code>
+        <button onclick="copyToClipboard('cmdStep1')">Copy</button>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- Step 2 -->
+    <div class="step">
+      <label for="packagePath">Step 2: Paste ADB Output Location</label>
+      <input type="text" id="packagePath" placeholder="e.g., package:/data/app/~~.../base.apk" oninput="generateCommands()">
+      <div class="instruction">Run this command to pull the APK to your computer:</div>
+      <div class="command-box">
+        <code id="cmdStep2">adb pull </code>
+        <button onclick="copyToClipboard('cmdStep2')">Copy</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function generateCommands() {
+      const pkgName = document.getElementById('packageName').value.trim();
+      let pkgPath = document.getElementById('packagePath').value.trim();
+
+      // Update Step 1 command
+      const step1Code = document.getElementById('cmdStep1');
+      if (pkgName) {
+        step1Code.textContent = `adb shell pm path ${pkgName}`;
+      } else {
+        step1Code.textContent = 'adb shell pm path ';
+      }
+
+      // Clean up path input if user includes "package:" prefix
+      if (pkgPath.startsWith('package:')) {
+        pkgPath = pkgPath.replace('package:', '').trim();
+      }
+
+      // Update Step 2 command
+      const step2Code = document.getElementById('cmdStep2');
+      if (pkgPath) {
+        // Generate optional output filename if package name exists
+        const outputFilename = pkgName ? ` ${pkgName}.apk` : '';
+        step2Code.textContent = `adb pull ${pkgPath}${outputFilename}`;
+      } else {
+        step2Code.textContent = 'adb pull ';
+      }
+    }
+
+    function copyToClipboard(elementId) {
+      const textToCopy = document.getElementById(elementId).textContent;
+      if (!textToCopy || textToCopy === 'adb shell pm path ' || textToCopy === 'adb pull ') {
+        return;
+      }
+
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        alert('Command copied to clipboard!');
+      }).catch(err => {
+        console.error('Failed to copy: ', err);
+      });
+    }
+  </script>
+
+</body>
+</html>
